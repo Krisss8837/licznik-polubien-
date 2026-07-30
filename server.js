@@ -91,16 +91,15 @@ app.get('/', (req, res) => {
     `);
 });
 
-// Prawidłowa inicjalizacja nową klasą TikTokLiveConnection
-const tiktokLiveConnection = new TikTokLiveConnection(tiktokUsername);
+// Poprawiona inicjalizacja z przekazaniem pustego obiektu opcji zapobiegająca błędom
+const tiktokLiveConnection = new TikTokLiveConnection(tiktokUsername, {});
 
 tiktokLiveConnection.connect().then(state => {
     console.info(`[OK] Połączono z transmisją o Room ID: ${state.roomId}`);
 }).catch(err => {
-    console.error('[BŁĄD] Nie można połączyć (upewnij się, że prowadzisz transmisję):', err);
+    console.error('[BŁĄD] Nie można połączyć:', err);
 });
 
-// Odbieranie polubień na żywo
 tiktokLiveConnection.on('like', (data) => {
     totalLikes += data.likeCount;
     io.emit('updateLikes', totalLikes);
