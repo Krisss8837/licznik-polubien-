@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const { WebcastPushConnection } = require('tiktok-live-connector');
+const TikTokLive = require('tiktok-live-connector');
 
 const app = express();
 const server = http.createServer(app);
@@ -86,7 +86,6 @@ app.get('/', (req, res) => {
                 socket.on('updateLikes', (likes) => {
                     counterElement.innerText = likes.toLocaleString() + " LIKES";
 
-                    // Animacja pulsowania serduszka przy każdym odebraniu polubień
                     heartElement.classList.add('pulse');
                     setTimeout(() => {
                         heartElement.classList.remove('pulse');
@@ -98,16 +97,15 @@ app.get('/', (req, res) => {
     `);
 });
 
-// Prawdziwe połączenie z TikTokiem (uwaga: biblioteka zacznie pobierać dane, gdy faktycznie rozpoczniesz transmisję na żywo)
-let tiktokStream = new WebcastPushConnection(tiktokUsername);
+// Prawidłowe wywołanie połączenia dla nowszych wersji biblioteki
+let tiktokStream = new TikTokLive.WebcastPushConnection(tiktokUsername);
 
 tiktokStream.connect().then(state => {
     console.info(`Połączono z room ID: ${state.roomId}`);
 }).catch(err => {
-    console.error('Błąd połączenia z TikTokiem (upewnij się, że prowadzisz live):', err);
+    console.error('Błąd połączenia z TikTokiem:', err);
 });
 
-// Nasłuchiwanie prawdziwych polubień od widzów
 tiktokStream.on('like', (data) => {
     totalLikes += data.likeCount;
     io.emit('updateLikes', totalLikes);
