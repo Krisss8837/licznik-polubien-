@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const { WebcastPushConnection } = require('tiktok-live-connector');
+const TikTokLiveConnector = require('tiktok-live-connector');
 
 const app = express();
 const server = http.createServer(app);
@@ -97,16 +97,16 @@ app.get('/', (req, res) => {
     `);
 });
 
-// Inicjalizacja połączenia z Twoim profilem na TikToku
-let tiktokStream = new WebcastPushConnection(tiktokUsername);
+// Bezpieczne pobranie konstruktora niezależnie od wersji paczki
+const WebcastConnection = TikTokLiveConnector.WebcastPushConnection || TikTokLiveConnector;
+let tiktokStream = new WebcastConnection(tiktokUsername);
 
 tiktokStream.connect().then(state => {
     console.info(`Połączono z room ID: ${state.roomId}`);
 }).catch(err => {
-    console.error('Błąd połączenia z TikTokiem (pamiętaj, że transmisja musi być włączona):', err);
+    console.error('Błąd połączenia z TikTokiem:', err);
 });
 
-// Nasłuchiwanie prawdziwych polubień wysyłanych przez widzów na żywo
 tiktokStream.on('like', (data) => {
     totalLikes += data.likeCount;
     io.emit('updateLikes', totalLikes);
