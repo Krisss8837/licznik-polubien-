@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const { WebcastPushConnection } = require('tiktok-live-connector');
+const TikTokLiveConnector = require('tiktok-live-connector');
 
 const app = express();
 const server = http.createServer(app);
@@ -97,7 +97,7 @@ app.get('/', (req, res) => {
     `);
 });
 
-let tiktokStream = new WebcastPushConnection(tiktokUsername);
+let tiktokStream = new TikTokLiveConnector.WebcastPushConnection(tiktokUsername);
 
 tiktokStream.connect().then(state => {
     console.info(`Połączono z room ID: ${state.roomId}`);
