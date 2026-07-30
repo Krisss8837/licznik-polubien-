@@ -1,7 +1,6 @@
 {
   "name": "tiktok-licznik",
   "version": "1.0.0",
-  "description": "Licznik polubień TikTok",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

@@ -1,17 +1,17 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const TikTokLiveConnector = require('tiktok-live-connector');
+const { TikTokLiveConnection } = require('tiktok-live-connector');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Twój prawdziwy nick z TikToka
-const tiktokUsername = "krisss8837"; 
+// Twój nick z TikToka
+const tiktokUsername = "krisss8837";
 let totalLikes = 0;
 
-// Strona graficzna licznika dla TikTok Live Studio
+// Szablon graficzny widżetu do TikTok Live Studio
 app.get('/', (req, res) => {
     res.send(`
         <!DOCTYPE html>
@@ -32,14 +32,12 @@ app.get('/', (req, res) => {
                     height: 100vh;
                     overflow: hidden;
                 }
-
                 .container {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
                     text-align: center;
                 }
-
                 .heart-icon {
                     width: 120px;
                     height: 120px;
@@ -50,11 +48,9 @@ app.get('/', (req, res) => {
                     transition: transform 0.1s ease;
                     filter: drop-shadow(3px 3px 0px #00ffff);
                 }
-
                 .pulse {
                     transform: scale(1.3);
                 }
-
                 .counter-text {
                     margin-top: 15px;
                     font-size: 55px;
@@ -76,7 +72,6 @@ app.get('/', (req, res) => {
                 <div id="heart" class="heart-icon"></div>
                 <div id="counter" class="counter-text">0 LIKES</div>
             </div>
-
             <script src="/socket.io/socket.io.js"></script>
             <script>
                 const socket = io();
@@ -85,7 +80,6 @@ app.get('/', (req, res) => {
 
                 socket.on('updateLikes', (likes) => {
                     counterElement.innerText = likes.toLocaleString() + " LIKES";
-
                     heartElement.classList.add('pulse');
                     setTimeout(() => {
                         heartElement.classList.remove('pulse');
@@ -97,22 +91,22 @@ app.get('/', (req, res) => {
     `);
 });
 
-// Bezpieczne pobranie konstruktora niezależnie od wersji paczki
-const WebcastConnection = TikTokLiveConnector.WebcastPushConnection || TikTokLiveConnector;
-let tiktokStream = new WebcastConnection(tiktokUsername);
+// Prawidłowa inicjalizacja nową klasą TikTokLiveConnection
+const tiktokLiveConnection = new TikTokLiveConnection(tiktokUsername);
 
-tiktokStream.connect().then(state => {
-    console.info(`Połączono z room ID: ${state.roomId}`);
+tiktokLiveConnection.connect().then(state => {
+    console.info(`[OK] Połączono z transmisją o Room ID: ${state.roomId}`);
 }).catch(err => {
-    console.error('Błąd połączenia z TikTokiem:', err);
+    console.error('[BŁĄD] Nie można połączyć (upewnij się, że prowadzisz transmisję):', err);
 });
 
-tiktokStream.on('like', (data) => {
+// Odbieranie polubień na żywo
+tiktokLiveConnection.on('like', (data) => {
     totalLikes += data.likeCount;
     io.emit('updateLikes', totalLikes);
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Serwer licznika działa na porcie ${PORT}!`);
+    console.log(`[START] Serwer działa na porcie ${PORT}`);
 });
