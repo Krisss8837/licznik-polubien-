@@ -1,13 +1,17 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const { WebcastPushConnection } = require('tiktok-live-connector');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-let totalLikes = 1250; // Przykładowa wartość testowa
+// Twój prawdziwy nick z TikToka
+const tiktokUsername = "krisss8837"; 
+let totalLikes = 0;
 
+// Strona wyświetlana w TikTok Live Studio
 app.get('/', (req, res) => {
     res.send(`
         <!DOCTYPE html>
@@ -82,6 +86,7 @@ app.get('/', (req, res) => {
                 socket.on('updateLikes', (likes) => {
                     counterElement.innerText = likes.toLocaleString() + " LIKES";
 
+                    // Animacja pulsowania serduszka przy każdym odebraniu polubień
                     heartElement.classList.add('pulse');
                     setTimeout(() => {
                         heartElement.classList.remove('pulse');
@@ -93,11 +98,20 @@ app.get('/', (req, res) => {
     `);
 });
 
-// Symulacja napływu polubień co sekundę (dla testu i wyglądu w TikTok Live Studio)
-setInterval(() => {
-    totalLikes += Math.floor(Math.random() * 5) + 1; // losowe przyrosty polubień
+// Prawdziwe połączenie z TikTokiem (uwaga: biblioteka zacznie pobierać dane, gdy faktycznie rozpoczniesz transmisję na żywo)
+let tiktokStream = new WebcastPushConnection(tiktokUsername);
+
+tiktokStream.connect().then(state => {
+    console.info(`Połączono z room ID: ${state.roomId}`);
+}).catch(err => {
+    console.error('Błąd połączenia z TikTokiem (upewnij się, że prowadzisz live):', err);
+});
+
+// Nasłuchiwanie prawdziwych polubień od widzów
+tiktokStream.on('like', (data) => {
+    totalLikes += data.likeCount;
     io.emit('updateLikes', totalLikes);
-}, 1000);
+});
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
